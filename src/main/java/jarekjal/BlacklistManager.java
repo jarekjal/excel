@@ -13,12 +13,9 @@ public class BlacklistManager {
     private static final int CELL_WITH_BLACKLIST_TYPE_DESCRIPTION_NUMBER = 0;
     private static final String BLACKLIST_TYPE = "Blacklist type:";
     private static final int CELL_WITH_BLACKLIST_TYPE_NUMBER = 1;
-    private static final String BLACKLIST_TYPE_ASSET = "Asset";
-    private static final String BLACKLIST_TYPE_CONTACT = "Contact";
+    public static final String BLACKLIST_TYPE_ASSET = "Asset";
+    public static final String BLACKLIST_TYPE_CONTACT = "Contact";
     private static final String IDENTIFIER_TYPE_COLUMN_HEADER = "Identifier type";
-    public static final int ID_TYPE_COLUMN_NUMBER = 0;
-    public static final int ID_VALUE_COLUMN_NUMBER = 1;
-
 
 
     // to be deleted
@@ -44,7 +41,8 @@ public class BlacklistManager {
     private void parseBlacklist(Sheet blacklist) throws Exception {
         String blacklistType = getBlacklistType(blacklist).orElseThrow(Exception::new); //TODO: IDITException blacklist type not valid (nie ma w tabeli takiego bledy)
         System.out.println("Typ blacklisty: " + blacklistType);
-        ParseResult parseResult = getParseResult(blacklist, blacklistType);
+        BlacklistFieldParser fieldParser = new BlacklistFieldParser(idTypesForContact, idTypesForAsset, blacklistType);
+        BlacklistParseResult parseResult = getParseResult(blacklist, fieldParser);
 
         if (parseResult.isBlacklistCorrect()) {
             // TODO: jesli brak bledow stworzyc liste obiektow blacklist elements
@@ -56,7 +54,7 @@ public class BlacklistManager {
 
     }
 
-    private ParseResult getParseResult(Sheet blacklist, String blacklistType) {
+    private BlacklistParseResult getParseResult(Sheet blacklist, BlacklistFieldParser fieldParser) {
         BlacklistErrors blacklistErrors = new BlacklistErrors();
         List<Row> dataRows = new ArrayList<>();
         boolean skipRow = true;
@@ -66,27 +64,29 @@ public class BlacklistManager {
                 continue;
             }
             if (!skipRow) {
-                System.out.println(row.getRowNum() + " > " + row.getCell(ID_TYPE_COLUMN_NUMBER));
-                updateBlacklistErrors(row, blacklistErrors, blacklistType);
+                System.out.println(row.getRowNum() + " > " + row.getCell(BlacklistFieldParser.ID_TYPE_COLUMN_NUMBER));
+                updateBlacklistErrors(row, blacklistErrors, fieldParser);
                 dataRows.add(row);
             }
         }
-        return new ParseResult(blacklistErrors, dataRows);
+        return new BlacklistParseResult(blacklistErrors, dataRows);
     }
 
-    private BlacklistErrors updateBlacklistErrors(Row row, BlacklistErrors errors, String blacklistType) {
-        BlacklistFieldParser fieldParser = new BlacklistFieldParser(idTypesForContact, idTypesForAsset, blacklistType);
-        if (!fieldParser.isIdTypeAllowed(row)) {
-            errors.addError(BlacklistErrors.BlacklistUploadFieldBasedError.IdTypeNotValid, row.getRowNum());
+    private BlacklistErrors updateBlacklistErrors(Row row, BlacklistErrors errors, BlacklistFieldParser fieldParser) {
+        if (fieldParser.isIdTypeInvalid(row)) {
+            errors.addError(BlacklistErrors.BlacklistFieldError.IdTypeNotValid, row.getRowNum());
         }
-        if (!fieldParser.isIdTypeEmpty(row)) {
-            errors.addError(BlacklistErrors.BlacklistUploadFieldBasedError.IdTypeEmpty, row.getRowNum());
+        if (fieldParser.isIdTypeEmpty(row)) {
+            errors.addError(BlacklistErrors.BlacklistFieldError.IdTypeEmpty, row.getRowNum());
+        }
+        if (fieldParser.isIdTypeNotSuitableForBlacklistType(row)) {
+            errors.addError(BlacklistErrors.BlacklistFieldError.IdTypeNotSuitableForBlacklistType, row.getRowNum());
         }
         return errors;
     }
 
     private boolean isRowContainingColumnHeadings(Row row) {
-        Cell firstColumnHeader = row.getCell(ID_TYPE_COLUMN_NUMBER);
+        Cell firstColumnHeader = row.getCell(BlacklistFieldParser.ID_TYPE_COLUMN_NUMBER);
         return /*isStringCell(firstColumnHeader) &&*/
                 firstColumnHeader.getStringCellValue().contains(IDENTIFIER_TYPE_COLUMN_HEADER);
     }

@@ -6,9 +6,12 @@ import java.util.Set;
 
 public class BlacklistFieldParser {
 
-    private Set<String> idTypesForContact;
-    private Set<String> idTypesForAsset;
-    private String blacklistType;
+    public static final int ID_TYPE_COLUMN_NUMBER = 0;
+    public static final int ID_VALUE_COLUMN_NUMBER = 1;
+
+    private final Set<String> idTypesForContact;
+    private final Set<String> idTypesForAsset;
+    private final String blacklistType;
 
     public BlacklistFieldParser(Set<String> idTypesForContact, Set<String> idTypesForAsset, String blacklistType) {
         this.idTypesForContact = idTypesForContact;
@@ -17,11 +20,26 @@ public class BlacklistFieldParser {
     }
 
     public boolean isIdTypeEmpty(Row row) {
-        return false;
+        return row.getCell(ID_TYPE_COLUMN_NUMBER).getStringCellValue().isBlank();
     }
 
-    public boolean isIdTypeAllowed(Row row) {
-        return  idTypesForAsset.contains(row.getCell(BlacklistManager.ID_TYPE_COLUMN_NUMBER).getStringCellValue().trim()) ||
-                idTypesForContact.contains(row.getCell(BlacklistManager.ID_TYPE_COLUMN_NUMBER).getStringCellValue().trim());
+    public boolean isIdTypeInvalid(Row row) {
+        return  !(isIdTypeSuitableForAsset(row) || isIdTypeSuitableForContact(row));
+    }
+
+    public boolean isIdTypeNotSuitableForBlacklistType(Row row) {
+        return blacklistType.equals(BlacklistManager.BLACKLIST_TYPE_ASSET) ?
+                !isIdTypeSuitableForAsset(row) : !isIdTypeSuitableForContact(row);
+    }
+
+
+
+
+    private boolean isIdTypeSuitableForContact(Row row) {
+        return idTypesForContact.contains(row.getCell(ID_TYPE_COLUMN_NUMBER).getStringCellValue().trim());
+    }
+
+    private boolean isIdTypeSuitableForAsset(Row row) {
+        return idTypesForAsset.contains(row.getCell(ID_TYPE_COLUMN_NUMBER).getStringCellValue().trim());
     }
 }

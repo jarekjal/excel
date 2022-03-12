@@ -4,16 +4,16 @@ import java.util.*;
 
 public class BlacklistErrors {
 
-    private Map<BlacklistErrors.BlacklistUploadFieldBasedError, Set<Integer>> errors;
+    private Map<BlacklistFieldError, Set<Integer>> errors;
     private boolean errorFound = false;
 
     public BlacklistErrors() {
         this.errors = new HashMap<>();
-        Arrays.stream(BlacklistErrors.BlacklistUploadFieldBasedError.values())
+        Arrays.stream(BlacklistFieldError.values())
                 .forEach(error -> errors.put(error, new HashSet<>()));
     }
 
-    public void addError(BlacklistErrors.BlacklistUploadFieldBasedError error, Integer rowNumber){
+    public void addError(BlacklistFieldError error, Integer rowNumber){
         this.errorFound = true;
         Set<Integer> lineNumbers = errors.get(error);
         lineNumbers.add(rowNumber + 1);
@@ -23,7 +23,7 @@ public class BlacklistErrors {
         return errorFound;
     }
 
-    public enum BlacklistUploadFieldBasedError {
+    public enum BlacklistFieldError {
         IdTypeNotValid, IdTypeEmpty, IdTypeNotSuitableForBlacklistType, IdValueEmpty, DateFormatNotValid, ReasonNotValid, SourceNotValid;
     }
 

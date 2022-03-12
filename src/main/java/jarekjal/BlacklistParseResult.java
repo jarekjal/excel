@@ -4,11 +4,11 @@ import org.apache.poi.ss.usermodel.Row;
 
 import java.util.List;
 
-public class ParseResult {
+public class BlacklistParseResult {
     private BlacklistErrors blacklistErrors;
     private List<Row> dataRows;
 
-    public ParseResult(BlacklistErrors blacklistErrors, List<Row> dataRows) {
+    public BlacklistParseResult(BlacklistErrors blacklistErrors, List<Row> dataRows) {
         this.blacklistErrors = blacklistErrors;
         this.dataRows = dataRows;
     }
