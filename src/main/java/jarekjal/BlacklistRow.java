@@ -79,8 +79,8 @@ public class BlacklistRow {
         this.comments = comments;
     }
 
-    public int getLineNumber(){
-        return this.rowNumber + 1 ;
+    public int getLineNumber() {
+        return this.rowNumber + 1;
     }
 
     public static class Builder {

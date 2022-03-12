@@ -21,7 +21,7 @@ public class BlacklistParseResult {
         return dataRows;
     }
 
-    public boolean isBlacklistCorrect(){
+    public boolean isBlacklistCorrect() {
         return !getBlacklistErrors().isErrorFound();
     }
 }

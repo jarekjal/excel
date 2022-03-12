@@ -13,7 +13,7 @@ public class BlacklistErrors {
                 .forEach(error -> errors.put(error, new HashSet<>()));
     }
 
-    public void addError(BlacklistFieldError error, Integer rowNumber){
+    public void addError(BlacklistFieldError error, Integer rowNumber) {
         this.errorFound = true;
         Set<Integer> lineNumbers = errors.get(error);
         lineNumbers.add(rowNumber + 1);

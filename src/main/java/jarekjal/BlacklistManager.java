@@ -5,7 +5,10 @@ import org.apache.poi.ss.usermodel.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class BlacklistManager {
 
@@ -22,7 +25,6 @@ public class BlacklistManager {
     private static final Set<String> idTypesForAsset = Set.of("Registration mark of vessel", "Name of the vessel",
             "NIB (national identification number)", "Name of the fleet");
     private static final Set<String> idTypesForContact = Set.of("OIB");
-
 
 
     public void process() throws Exception {
@@ -82,12 +84,21 @@ public class BlacklistManager {
         if (fieldParser.isIdTypeNotSuitableForBlacklistType(row)) {
             errors.addError(BlacklistErrors.BlacklistFieldError.IdTypeNotSuitableForBlacklistType, row.getRowNum());
         }
+        if (fieldParser.isIdValueBlank(row)) {
+            errors.addError(BlacklistErrors.BlacklistFieldError.IdValueEmpty, row.getRowNum());
+        }
+//TODO:
+//        8 IF Start Date or End Date format is not as expected Date format is not valid. The format must be
+//        DD.MM.YYYY, #line number#
+//        9 If Reason is not one of the listed ones in T_BLACKLIST_REASON.DESCRIPTION Reason is not valid, #line number#
+//        10 If Source is not one of the listed ones in T_BLACKLIST_SOURCE.DESCRIPTION Source is not valid, #line number#
+
         return errors;
     }
 
     private boolean isRowContainingColumnHeadings(Row row) {
         Cell firstColumnHeader = row.getCell(BlacklistFieldParser.ID_TYPE_COLUMN_NUMBER);
-        return /*isStringCell(firstColumnHeader) &&*/
+        return isStringCell(firstColumnHeader) &&
                 firstColumnHeader.getStringCellValue().contains(IDENTIFIER_TYPE_COLUMN_HEADER);
     }
 
@@ -112,7 +123,7 @@ public class BlacklistManager {
         } else return Optional.empty();
     }
 
-    private boolean isStringCell(Cell cellWithBlacklistType) {
+    public static boolean isStringCell(Cell cellWithBlacklistType) {
         return cellWithBlacklistType.getCellType().equals(CellType.STRING);
     }
 
