@@ -25,10 +25,12 @@ public class BlacklistManager {
     private static final Set<String> idTypesForAsset = Set.of("Registration mark of vessel", "Name of the vessel",
             "NIB (national identification number)", "Name of the fleet");
     private static final Set<String> idTypesForContact = Set.of("OIB");
+    private static final Set<String> blacklistReasons = Set.of("valid reason");
+    private static final Set<String> blacklistSources = Set.of();
 
 
     public void process() throws Exception {
-        File file = new File("C:\\Users\\jarekjal\\IdeaProjects\\excel\\src\\main\\resources\\blacklist.xlsx");
+        File file = new File("C:\\Users\\Jaroslaw.Jaloszynski\\IdeaProjects\\excel\\src\\main\\resources\\blacklist.xlsx");
         System.out.println("Przetwarzam plik: " + file.getAbsolutePath());
         FileInputStream fs = new FileInputStream(file);
         InputStream is = fs;
@@ -42,8 +44,13 @@ public class BlacklistManager {
 
     private void parseBlacklist(Sheet blacklist) throws Exception {
         String blacklistType = getBlacklistType(blacklist).orElseThrow(Exception::new); //TODO: IDITException blacklist type not valid (nie ma w tabeli takiego bledy)
-        System.out.println("Typ blacklisty: " + blacklistType);
-        BlacklistFieldParser fieldParser = new BlacklistFieldParser(idTypesForContact, idTypesForAsset, blacklistType);
+        BlacklistFieldParser fieldParser = new BlacklistFieldParser.Builder()
+                .withBlacklistType(blacklistType)
+                .withIdTypesForAsset(idTypesForAsset)
+                .withIdTypesForContact(idTypesForContact)
+                .withBlacklistReasons(blacklistReasons)
+                .withBlacklistSources(blacklistSources)
+                .build();
         BlacklistParseResult parseResult = getParseResult(blacklist, fieldParser);
 
         if (parseResult.isBlacklistCorrect()) {
@@ -66,7 +73,6 @@ public class BlacklistManager {
                 continue;
             }
             if (!skipRow) {
-                System.out.println(row.getRowNum() + " > " + row.getCell(BlacklistFieldParser.ID_TYPE_COLUMN_NUMBER));
                 updateBlacklistErrors(row, blacklistErrors, fieldParser);
                 dataRows.add(row);
             }
@@ -87,12 +93,15 @@ public class BlacklistManager {
         if (fieldParser.isIdValueBlank(row)) {
             errors.addError(BlacklistErrors.BlacklistFieldError.IdValueEmpty, row.getRowNum());
         }
-//TODO:
-//        8 IF Start Date or End Date format is not as expected Date format is not valid. The format must be
-//        DD.MM.YYYY, #line number#
-//        9 If Reason is not one of the listed ones in T_BLACKLIST_REASON.DESCRIPTION Reason is not valid, #line number#
-//        10 If Source is not one of the listed ones in T_BLACKLIST_SOURCE.DESCRIPTION Source is not valid, #line number#
-
+        if (fieldParser.isStartDateIncorrect(row) || fieldParser.isEndDateIncorrect(row)) {
+            errors.addError(BlacklistErrors.BlacklistFieldError.DateFormatNotValid, row.getRowNum());
+        }
+        if (fieldParser.isReasonNotValid(row)) {
+            errors.addError(BlacklistErrors.BlacklistFieldError.ReasonNotValid, row.getRowNum());
+        }
+        if (fieldParser.isSourceNotValid(row)) {
+            errors.addError(BlacklistErrors.BlacklistFieldError.SourceNotValid, row.getRowNum());
+        }
         return errors;
     }
 
